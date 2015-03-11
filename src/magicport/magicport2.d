@@ -247,7 +247,7 @@ void main(string[] args)
         }
     }
     if (failed)
-        assert(0);
+        assert(0, "failed");
 }
 
 struct D
