@@ -68,6 +68,11 @@ struct Port
     static float strtof(const char *p, char **endp);
     static double strtod(const char *p, char **endp);
     static longdouble strtold(const char *p, char **endp);
+
+    static void sputl(int value, void* buffer);
+    static int sgetl(void* buffer);
+    static void sputl_big(int value, void* buffer);
+    static int sgetl_big(void* buffer);
 };
 
 #endif

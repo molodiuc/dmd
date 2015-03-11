@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 
 #include "root.h"
+#include "port.h"
 #include "stringtable.h"
 
 #include "mars.h"
@@ -56,7 +57,7 @@ class LibElf : public Library
 
     void addSymbol(ElfObjModule *om, char *name, int pickAny = 0);
   private:
-    void scanElfObjModule(ElfObjModule *om);
+    void scanObjModule(ElfObjModule *om);
     void WriteLibToBuffer(OutBuffer *libbuf);
 
     void error(const char *format, ...)
@@ -140,22 +141,6 @@ void LibElf::addLibrary(void *buf, size_t buflen)
 
 /*****************************************************************************/
 /*****************************************************************************/
-
-void sputl(int value, void* buffer)
-{
-    unsigned char *p = (unsigned char*)buffer;
-    p[0] = (unsigned char)(value >> 24);
-    p[1] = (unsigned char)(value >> 16);
-    p[2] = (unsigned char)(value >> 8);
-    p[3] = (unsigned char)(value);
-}
-
-int sgetl(void* buffer)
-{
-    unsigned char *p = (unsigned char*)buffer;
-    return (((((p[0] << 8) | p[1]) << 8) | p[2]) << 8) | p[3];
-}
-
 
 struct ElfObjModule
 {
@@ -246,17 +231,17 @@ void LibElf::addSymbol(ElfObjModule *om, char *name, int pickAny)
     }
 }
 
-extern void scanElfElfObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
+extern void scanElfObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
 
 /************************************
  * Scan single object module for dictionary symbols.
  * Send those symbols to LibElf::addSymbol().
  */
 
-void LibElf::scanElfObjModule(ElfObjModule *om)
+void LibElf::scanObjModule(ElfObjModule *om)
 {
 #if LOG
-    printf("LibElf::scanElfObjModule(%s)\n", om->name);
+    printf("LibElf::scanObjModule(%s)\n", om->name);
 #endif
 
 
@@ -279,7 +264,7 @@ void LibElf::scanElfObjModule(ElfObjModule *om)
 
     Context ctx(this, om);
 
-    scanElfElfObjModule(&ctx, &Context::addSymbol, om->base, om->length, om->name, loc);
+    scanElfObjModule(&ctx, &Context::addSymbol, om->base, om->length, om->name, loc);
 }
 
 /***************************************
@@ -444,7 +429,7 @@ void LibElf::addObject(const char *module_name, void *buf, size_t buflen)
          * go into the symbol table than we do.
          * This is also probably faster.
          */
-        unsigned nsymbols = sgetl(symtab);
+        unsigned nsymbols = Port::sgetl(symtab);
         char *s = symtab + 4 + nsymbols * 4;
         if (4 + nsymbols * (4 + 1) > symtab_size)
         {   reason = __LINE__;
@@ -457,7 +442,7 @@ void LibElf::addObject(const char *module_name, void *buf, size_t buflen)
             {   reason = __LINE__;
                 goto Lcorrupt;
             }
-            unsigned moff = sgetl(symtab + 4 + i * 4);
+            unsigned moff = Port::sgetl(symtab + 4 + i * 4);
 //printf("symtab[%d] moff = %x  %x, name = %s\n", i, moff, moff + sizeof(Header), name);
             for (unsigned m = mstart; 1; m++)
             {   if (m == objmodules.dim)
@@ -545,7 +530,7 @@ void LibElf::WriteLibToBuffer(OutBuffer *libbuf)
     {   ElfObjModule *om = objmodules[i];
         if (om->scan)
         {
-            scanElfObjModule(om);
+            scanObjModule(om);
         }
     }
 
@@ -617,13 +602,13 @@ void LibElf::WriteLibToBuffer(OutBuffer *libbuf)
     OmToHeader(&h, &om);
     libbuf->write(&h, sizeof(h));
     char buf[4];
-    sputl(objsymbols.dim, buf);
+    Port::sputl(objsymbols.dim, buf);
     libbuf->write(buf, 4);
 
     for (size_t i = 0; i < objsymbols.dim; i++)
     {   ElfObjSymbol *os = objsymbols[i];
 
-        sputl(os->om->offset, buf);
+        Port::sputl(os->om->offset, buf);
         libbuf->write(buf, 4);
     }
 

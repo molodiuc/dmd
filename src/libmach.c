@@ -66,7 +66,7 @@ class LibMach : public Library
 
     void addSymbol(MachObjModule *om, char *name, int pickAny = 0);
   private:
-    void scanMachObjModule(MachObjModule *om);
+    void scanObjModule(MachObjModule *om);
     void WriteLibToBuffer(OutBuffer *libbuf);
 
     void error(const char *format, ...)
@@ -150,22 +150,6 @@ void LibMach::addLibrary(void *buf, size_t buflen)
 
 /*****************************************************************************/
 /*****************************************************************************/
-
-void sputl(int value, void* buffer)
-{
-    unsigned char *p = (unsigned char*)buffer;
-    p[3] = (unsigned char)(value >> 24);
-    p[2] = (unsigned char)(value >> 16);
-    p[1] = (unsigned char)(value >> 8);
-    p[0] = (unsigned char)(value);
-}
-
-int sgetl(void* buffer)
-{
-    unsigned char *p = (unsigned char*)buffer;
-    return (((((p[3] << 8) | p[2]) << 8) | p[1]) << 8) | p[0];
-}
-
 
 struct MachObjModule
 {
@@ -271,17 +255,17 @@ void LibMach::addSymbol(MachObjModule *om, char *name, int pickAny)
 #endif
 }
 
-extern void scanMachMachObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
+extern void scanMachObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
 
 /************************************
  * Scan single object module for dictionary symbols.
  * Send those symbols to LibMach::addSymbol().
  */
 
-void LibMach::scanMachObjModule(MachObjModule *om)
+void LibMach::scanObjModule(MachObjModule *om)
 {
 #if LOG
-    printf("LibMach::scanMachObjModule(%s)\n", om->name);
+    printf("LibMach::scanObjModule(%s)\n", om->name);
 #endif
 
 
@@ -304,7 +288,7 @@ void LibMach::scanMachObjModule(MachObjModule *om)
 
     Context ctx(this, om);
 
-    scanMachMachObjModule(&ctx, &Context::addSymbol, om->base, om->length, om->name, loc);
+    scanMachObjModule(&ctx, &Context::addSymbol, om->base, om->length, om->name, loc);
 }
 
 /***************************************
@@ -418,7 +402,7 @@ void LibMach::addObject(const char *module_name, void *buf, size_t buflen)
          * go into the symbol table than we do.
          * This is also probably faster.
          */
-        unsigned nsymbols = sgetl(symtab) / 8;
+        unsigned nsymbols = Port::sgetl(symtab) / 8;
         char *s = symtab + 4 + nsymbols * 8 + 4;
         if (4 + nsymbols * 8 + 4 > symtab_size)
         {   reason = __LINE__;
@@ -426,14 +410,14 @@ void LibMach::addObject(const char *module_name, void *buf, size_t buflen)
         }
         for (unsigned i = 0; i < nsymbols; i++)
         {
-            unsigned soff = sgetl(symtab + 4 + i * 8);
+            unsigned soff = Port::sgetl(symtab + 4 + i * 8);
             char *name = s + soff;
             //printf("soff = x%x name = %s\n", soff, name);
             if (s + strlen(name) + 1 - symtab > symtab_size)
             {   reason = __LINE__;
                 goto Lcorrupt;
             }
-            unsigned moff = sgetl(symtab + 4 + i * 8 + 4);
+            unsigned moff = Port::sgetl(symtab + 4 + i * 8 + 4);
             //printf("symtab[%d] moff = x%x  x%x, name = %s\n", i, moff, moff + sizeof(Header), name);
             for (unsigned m = mstart; 1; m++)
             {   if (m == objmodules.dim)
@@ -521,7 +505,7 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
     {   MachObjModule *om = objmodules[i];
         if (om->scan)
         {
-            scanMachObjModule(om);
+            scanObjModule(om);
         }
     }
 
@@ -590,23 +574,23 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
 
     char buf[4];
 
-    sputl(objsymbols.dim * 8, buf);
+    Port::sputl(objsymbols.dim * 8, buf);
     libbuf->write(buf, 4);
 
     int stringoff = 0;
     for (size_t i = 0; i < objsymbols.dim; i++)
     {   MachObjSymbol *os = objsymbols[i];
 
-        sputl(stringoff, buf);
+        Port::sputl(stringoff, buf);
         libbuf->write(buf, 4);
 
-        sputl(os->om->offset, buf);
+        Port::sputl(os->om->offset, buf);
         libbuf->write(buf, 4);
 
         stringoff += strlen(os->name) + 1;
     }
 
-    sputl(stringoff, buf);
+    Port::sputl(stringoff, buf);
     libbuf->write(buf, 4);
 
     for (size_t i = 0; i < objsymbols.dim; i++)
