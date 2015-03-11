@@ -36,25 +36,25 @@
 
 #define LOG 0
 
-struct ObjModule;
+struct MachObjModule;
 
-struct ObjSymbol
+struct MachObjSymbol
 {
     char *name;
-    ObjModule *om;
+    MachObjModule *om;
 };
 
 #include "arraytypes.h"
 
-typedef Array<ObjModule *> ObjModules;
-typedef Array<ObjSymbol *> ObjSymbols;
+typedef Array<MachObjModule *> MachObjModules;
+typedef Array<MachObjSymbol *> MachObjSymbols;
 
 class LibMach : public Library
 {
   public:
     File *libfile;
-    ObjModules objmodules;   // ObjModule[]
-    ObjSymbols objsymbols;   // ObjSymbol[]
+    MachObjModules objmodules;   // MachObjModule[]
+    MachObjSymbols objsymbols;   // MachObjSymbol[]
 
     StringTable tab;
 
@@ -64,9 +64,9 @@ class LibMach : public Library
     void addLibrary(void *buf, size_t buflen);
     void write();
 
-    void addSymbol(ObjModule *om, char *name, int pickAny = 0);
+    void addSymbol(MachObjModule *om, char *name, int pickAny = 0);
   private:
-    void scanObjModule(ObjModule *om);
+    void scanMachObjModule(MachObjModule *om);
     void WriteLibToBuffer(OutBuffer *libbuf);
 
     void error(const char *format, ...)
@@ -167,7 +167,7 @@ int sgetl(void* buffer)
 }
 
 
-struct ObjModule
+struct MachObjModule
 {
     unsigned char *base;        // where are we holding it in memory
     unsigned length;            // in bytes
@@ -192,7 +192,7 @@ struct Header
     char trailer[2];
 };
 
-void OmToHeader(Header *h, ObjModule *om)
+void OmToHeader(Header *h, MachObjModule *om)
 {
     size_t slen = strlen(om->name);
     int nzeros = 8 - ((slen + 4) & 7);
@@ -237,7 +237,7 @@ void OmToHeader(Header *h, ObjModule *om)
     h->trailer[1] = '\n';
 }
 
-void LibMach::addSymbol(ObjModule *om, char *name, int pickAny)
+void LibMach::addSymbol(MachObjModule *om, char *name, int pickAny)
 {
 #if LOG
     printf("LibMach::addSymbol(%s, %s, %d)\n", om->name, name, pickAny);
@@ -249,14 +249,14 @@ void LibMach::addSymbol(ObjModule *om, char *name, int pickAny)
         if (!pickAny)
         {   s = tab.lookup(name, strlen(name));
             assert(s);
-            ObjSymbol *os = (ObjSymbol *)s->ptrvalue;
+            MachObjSymbol *os = (MachObjSymbol *)s->ptrvalue;
             error("multiple definition of %s: %s and %s: %s",
                 om->name, name, os->om->name, os->name);
         }
     }
     else
     {
-        ObjSymbol *os = new ObjSymbol();
+        MachObjSymbol *os = new MachObjSymbol();
         os->name = strdup(name);
         os->om = om;
         s->ptrvalue = (void *)os;
@@ -264,33 +264,33 @@ void LibMach::addSymbol(ObjModule *om, char *name, int pickAny)
         objsymbols.push(os);
     }
 #else
-    ObjSymbol *os = new ObjSymbol();
+    MachObjSymbol *os = new MachObjSymbol();
     os->name = strdup(name);
     os->om = om;
     objsymbols.push(os);
 #endif
 }
 
-extern void scanMachObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
+extern void scanMachMachObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
 
 /************************************
  * Scan single object module for dictionary symbols.
  * Send those symbols to LibMach::addSymbol().
  */
 
-void LibMach::scanObjModule(ObjModule *om)
+void LibMach::scanMachObjModule(MachObjModule *om)
 {
 #if LOG
-    printf("LibMach::scanObjModule(%s)\n", om->name);
+    printf("LibMach::scanMachObjModule(%s)\n", om->name);
 #endif
 
 
     struct Context
     {
         LibMach *lib;
-        ObjModule *om;
+        MachObjModule *om;
 
-        Context(LibMach *lib, ObjModule *om)
+        Context(LibMach *lib, MachObjModule *om)
     {
             this->lib = lib;
             this->om = om;
@@ -304,7 +304,7 @@ void LibMach::scanObjModule(ObjModule *om)
 
     Context ctx(this, om);
 
-    scanMachObjModule(&ctx, &Context::addSymbol, om->base, om->length, om->name, loc);
+    scanMachMachObjModule(&ctx, &Context::addSymbol, om->base, om->length, om->name, loc);
 }
 
 /***************************************
@@ -393,7 +393,7 @@ void LibMach::addObject(const char *module_name, void *buf, size_t buflen)
             }
             else
             {
-                ObjModule *om = new ObjModule();
+                MachObjModule *om = new MachObjModule();
                 om->base = (unsigned char *)buf + offset - sizeof(Header);
                 om->length = size + sizeof(Header);
                 om->offset = 0;
@@ -440,7 +440,7 @@ void LibMach::addObject(const char *module_name, void *buf, size_t buflen)
                 {   reason = __LINE__;
                     goto Lcorrupt;              // didn't find it
                 }
-                ObjModule *om = objmodules[m];
+                MachObjModule *om = objmodules[m];
                 //printf("\tom offset = x%x\n", (char *)om->base - (char *)buf);
                 if (moff == (char *)om->base - (char *)buf)
                 {
@@ -457,7 +457,7 @@ void LibMach::addObject(const char *module_name, void *buf, size_t buflen)
 
     /* It's an object module
      */
-    ObjModule *om = new ObjModule();
+    MachObjModule *om = new MachObjModule();
     om->base = (unsigned char *)buf;
     om->length = buflen;
     om->offset = 0;
@@ -518,10 +518,10 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
     /************* Scan Object Modules for Symbols ******************/
 
     for (size_t i = 0; i < objmodules.dim; i++)
-    {   ObjModule *om = objmodules[i];
+    {   MachObjModule *om = objmodules[i];
         if (om->scan)
         {
-            scanObjModule(om);
+            scanMachObjModule(om);
         }
     }
 
@@ -530,7 +530,7 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
     unsigned moffset = 8 + sizeof(Header) + 4 + 4;
 
     for (size_t i = 0; i < objsymbols.dim; i++)
-    {   ObjSymbol *os = objsymbols[i];
+    {   MachObjSymbol *os = objsymbols[i];
 
         moffset += 8 + strlen(os->name) + 1;
     }
@@ -544,7 +544,7 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
 #endif
 
     for (size_t i = 0; i < objmodules.dim; i++)
-    {   ObjModule *om = objmodules[i];
+    {   MachObjModule *om = objmodules[i];
 
         moffset += moffset & 1;
         om->offset = moffset;
@@ -569,7 +569,7 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
     /************* Write the library ******************/
     libbuf->write("!<arch>\n", 8);
 
-    ObjModule om;
+    MachObjModule om;
     om.base = NULL;
     om.length = hoffset - (8 + sizeof(Header));
     om.offset = 8;
@@ -595,7 +595,7 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
 
     int stringoff = 0;
     for (size_t i = 0; i < objsymbols.dim; i++)
-    {   ObjSymbol *os = objsymbols[i];
+    {   MachObjSymbol *os = objsymbols[i];
 
         sputl(stringoff, buf);
         libbuf->write(buf, 4);
@@ -610,7 +610,7 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
     libbuf->write(buf, 4);
 
     for (size_t i = 0; i < objsymbols.dim; i++)
-    {   ObjSymbol *os = objsymbols[i];
+    {   MachObjSymbol *os = objsymbols[i];
 
         libbuf->writestring(os->name);
         libbuf->writeByte(0);
@@ -629,7 +629,7 @@ void LibMach::WriteLibToBuffer(OutBuffer *libbuf)
     /* Write out each of the object modules
      */
     for (size_t i = 0; i < objmodules.dim; i++)
-    {   ObjModule *om = objmodules[i];
+    {   MachObjModule *om = objmodules[i];
 
         if (libbuf->offset & 1)
             libbuf->writeByte('\n');    // module alignment
