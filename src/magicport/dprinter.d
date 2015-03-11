@@ -156,7 +156,7 @@ class DPrinter : Visitor
         case "__IMPORT__": print("\"v\" ~ import(\"VERSION\")[0 .. $ - 1]"); return;
         case "operator ==": print("opEquals"); return;
         case "import", "module", "version", "ref", "scope",
-            "body", "alias", "is",
+            "body", "alias", "is", "align",
             "delegate", "cast", "mangleof",
             "foreach", "super", "init", "tupleof":
             print("_");
