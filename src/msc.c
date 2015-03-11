@@ -37,7 +37,7 @@ void out_config_init(
         int model,
         bool exe,
         bool trace,
-        bool nofloat
+        bool nofloat,
         bool verbose,
         bool optimize,
         int symdebug,
