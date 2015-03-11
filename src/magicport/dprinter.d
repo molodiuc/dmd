@@ -158,7 +158,8 @@ class DPrinter : Visitor
         case "import", "module", "version", "ref", "scope",
             "body", "alias", "is", "align",
             "delegate", "cast", "mangleof",
-            "foreach", "super", "init", "tupleof":
+            "foreach", "super", "init", "tupleof",
+            "real":
             print("_");
             print(s);
             return;
