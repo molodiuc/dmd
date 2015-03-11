@@ -28,7 +28,7 @@
         "root/outbuffer.h", "root/outbuffer.c",
         "root/stringtable.h", "root/stringtable.c",
         "root/man.c", "root/response.c",
-        "glue.c", "msc.c", "s2ir.c", "todt.c", "e2ir.c", "tocsym.c",
+        "glue.c", "s2ir.c", "todt.c", "e2ir.c", "tocsym.c",
         "toobj.c", "toctype.c", "tocvdebug.c", "toir.h", "toir.c",
         "libmscoff.c", "scanmscoff.c", "irstate.h", "irstate.c", "typinf.c", "iasm.c", 
         "libomf.c", "scanomf.c", "libelf.c", "scanelf.c", "libmach.c", "scanmach.c"
@@ -3223,6 +3223,17 @@
             "module" : "glue",
             "package" : "",
             "imports" : [
+                "root.array",
+                "backend",
+                "arraytypes",
+                "dsymbol",
+                "lib",
+                "dmodule",
+                "identifier",
+                "func",
+                "globals",
+                "mtype",
+                "root.file"
             ],
             "members" :
             [
@@ -3257,24 +3268,15 @@
             ]
         },
         {
-            "module" : "msc",
-            "package" : "",
-            "imports" : [
-            ],
-            "members" :
-            [
-                "variable config",
-                "variable configv",
-                "function backend_init",
-                "function align",
-                "function size",
-                "function symboldata"
-            ]
-        },
-        {
             "module" : "s2ir",
             "package" : "",
             "imports" : [
+                "globals",
+                "backend",
+                "statement",
+                "irstate",
+                "visitor",
+                "root.array"
             ],
             "members" :
             [
@@ -3294,6 +3296,14 @@
             "module" : "todt",
             "package" : "",
             "imports" : [
+                "root.array",
+                "backend",
+                "init",
+                "expression",
+                "dclass",
+                "mtype",
+                "dstruct",
+                "ctfeexpr"
             ],
             "members" :
             [
@@ -3314,6 +3324,17 @@
             "module" : "e2ir",
             "package" : "",
             "imports" : [
+                "root.array",
+                "declaration",
+                "mtype",
+                "backend",
+                "globals",
+                "irstate",
+                "func",
+                "arraytypes",
+                "dstruct",
+                "root.stringtable",
+                "expression"
             ],
             "members" :
             [
@@ -3342,6 +3363,17 @@
             "module" : "tocsym",
             "package" : "",
             "imports" : [
+                "backend",
+                "dsymbol",
+                "func",
+                "identifier",
+                "dclass",
+                "aggregate",
+                "denum",
+                "dmodule",
+                "mtype",
+                "ctfeexpr",
+                "expression"
             ],
             "members" :
             [
@@ -3367,6 +3399,9 @@
             "module" : "toobj",
             "package" : "",
             "imports" : [
+                "dmodule",
+                "dsymbol",
+                "dclass"
             ],
             "members" :
             [
@@ -3379,6 +3414,9 @@
             "module" : "toctype",
             "package" : "",
             "imports" : [
+                "visitor",
+                "mtype",
+                "backend"
             ],
             "members" :
             [
@@ -3390,6 +3428,11 @@
             "module" : "tocvdebug",
             "package" : "",
             "imports" : [
+                "dsymbol",
+                "func",
+                "dstruct",
+                "dclass",
+                "denum"
             ],
             "members" :
             [
@@ -3411,6 +3454,14 @@
             "module" : "toir",
             "package" : "",
             "imports" : [
+                "backend",
+                "irstate",
+                "globals",
+                "dsymbol",
+                "aggregate",
+                "func",
+                "declaration",
+                "mtype"
             ],
             "members" :
             [
@@ -3427,6 +3478,12 @@
             "module" : "libmscoff",
             "package" : "",
             "imports" : [
+                "root.array",
+                "lib",
+                "root.file",
+                "root.stringtable",
+                "root.outbuffer",
+                "globals"
             ],
             "members" :
             [
@@ -3446,6 +3503,7 @@
             "module" : "scanmscoff",
             "package" : "",
             "imports" : [
+                "globals"
             ],
             "members" :
             [
@@ -3456,6 +3514,13 @@
             "module" : "irstate",
             "package" : "",
             "imports" : [
+                "statement",
+                "dmodule",
+                "dsymbol",
+                "identifier",
+                "backend",
+                "arraytypes",
+                "func"
             ],
             "members" :
             [
@@ -3466,6 +3531,13 @@
             "module" : "typinf",
             "package" : "",
             "imports" : [
+                "mtype",
+                "dscope",
+                "expression",
+                "declaration",
+                "visitor",
+                "backend",
+                "dclass"
             ],
             "members" :
             [
@@ -3481,10 +3553,21 @@
             "module" : "iasm",
             "package" : "",
             "imports" : [
+                "tokens",
+                "globals",
+                "dsymbol",
+                "statement",
+                "dscope",
+                "backend",
+                "mtype"
             ],
             "members" :
             [
                 "version enum ASMTK"
+            ],
+            "extra" :
+            [
+                "enum TX86 = true;"
             ]
         },
         {
