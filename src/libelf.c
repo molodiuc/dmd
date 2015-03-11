@@ -429,7 +429,7 @@ void LibElf::addObject(const char *module_name, void *buf, size_t buflen)
          * go into the symbol table than we do.
          * This is also probably faster.
          */
-        unsigned nsymbols = Port::sgetl(symtab);
+        unsigned nsymbols = Port::sgetl_big(symtab);
         char *s = symtab + 4 + nsymbols * 4;
         if (4 + nsymbols * (4 + 1) > symtab_size)
         {   reason = __LINE__;
@@ -442,7 +442,7 @@ void LibElf::addObject(const char *module_name, void *buf, size_t buflen)
             {   reason = __LINE__;
                 goto Lcorrupt;
             }
-            unsigned moff = Port::sgetl(symtab + 4 + i * 4);
+            unsigned moff = Port::sgetl_big(symtab + 4 + i * 4);
 //printf("symtab[%d] moff = %x  %x, name = %s\n", i, moff, moff + sizeof(ElfLibHeader), name);
             for (unsigned m = mstart; 1; m++)
             {   if (m == objmodules.dim)
@@ -602,13 +602,13 @@ void LibElf::WriteLibToBuffer(OutBuffer *libbuf)
     ElfOmToHeader(&h, &om);
     libbuf->write(&h, sizeof(h));
     char buf[4];
-    Port::sputl(objsymbols.dim, buf);
+    Port::sputl_big(objsymbols.dim, buf);
     libbuf->write(buf, 4);
 
     for (size_t i = 0; i < objsymbols.dim; i++)
     {   ElfObjSymbol *os = objsymbols[i];
 
-        Port::sputl(os->om->offset, buf);
+        Port::sputl_big(os->om->offset, buf);
         libbuf->write(buf, 4);
     }
 

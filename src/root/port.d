@@ -156,4 +156,38 @@ extern (C++) struct Port
     {
         *res = yl2xp1(*x, *y);
     }
+
+    // Little endian
+    static void sputl(int value, void* buffer)
+    {
+        ubyte* p = cast(ubyte*)buffer;
+        p[3] = cast(ubyte)(value >> 24);
+        p[2] = cast(ubyte)(value >> 16);
+        p[1] = cast(ubyte)(value >> 8);
+        p[0] = cast(ubyte)(value);
+    }
+
+    // Little endian
+    static int sgetl(void* buffer)
+    {
+        ubyte* p = cast(ubyte*)buffer;
+        return (((((p[3] << 8) | p[2]) << 8) | p[1]) << 8) | p[0];
+    }
+
+    // Big endian
+    static void sputl_big(int value, void* buffer)
+    {
+        ubyte* p = cast(ubyte*)buffer;
+        p[0] = cast(ubyte)(value >> 24);
+        p[1] = cast(ubyte)(value >> 16);
+        p[2] = cast(ubyte)(value >> 8);
+        p[3] = cast(ubyte)(value);
+    }
+
+    // Big endian
+    static int sgetl_big(void* buffer)
+    {
+        ubyte* p = cast(ubyte*)buffer;
+        return (((((p[0] << 8) | p[1]) << 8) | p[2]) << 8) | p[3];
+    }
 }

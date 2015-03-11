@@ -1094,19 +1094,21 @@ longdouble Port::strtold(const char *p, char **endp)
 
 #endif
 
+// Little endian
 void Port::sputl(int value, void* buffer)
 {
     unsigned char *p = (unsigned char*)buffer;
-    p[0] = (unsigned char)(value >> 24);
-    p[1] = (unsigned char)(value >> 16);
-    p[2] = (unsigned char)(value >> 8);
-    p[3] = (unsigned char)(value);
+    p[3] = (unsigned char)(value >> 24);
+    p[2] = (unsigned char)(value >> 16);
+    p[1] = (unsigned char)(value >> 8);
+    p[0] = (unsigned char)(value);
 }
 
+// Little endian
 int Port::sgetl(void* buffer)
 {
     unsigned char *p = (unsigned char*)buffer;
-    return (((((p[0] << 8) | p[1]) << 8) | p[2]) << 8) | p[3];
+    return (((((p[3] << 8) | p[2]) << 8) | p[1]) << 8) | p[0];
 }
 
 // Big endian
