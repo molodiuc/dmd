@@ -32,7 +32,7 @@
         "toobj.c", "toctype.c", "tocvdebug.c", "toir.h", "toir.c",
         "libmscoff.c", "scanmscoff.c", "irstate.h", "irstate.c", "typinf.c", "iasm.c", 
         "toelfdebug.c", "libomf.c", "scanomf.c", "libelf.c", "scanelf.c", "libmach.c", "scanmach.c",
-        "tk.c", "eh.c", "gluestub.c"
+        "tk.c", "eh.c"
     ],
     "mapping" :
     [
