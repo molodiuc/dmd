@@ -59,7 +59,6 @@
 
 static Outbuffer *fobjbuf;
 
-static char __file__[] = __FILE__;      // for tassert.h
 #include        "tassert.h"
 
 #define MATCH_SECTION 1

@@ -13,7 +13,6 @@
 #include "cc.h"
 #include "code.h"
 
-static char __file__[] = __FILE__;
 #include "tassert.h"
 
 #if SCPP

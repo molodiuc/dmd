@@ -30,7 +30,6 @@
 #include        "cpp.h"
 #include        "filespec.h"
 
-static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
 //char *cpp_name = NULL;

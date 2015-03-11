@@ -23,7 +23,6 @@
 #include        "oper.h"
 #include        "vec.h"
 
-static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
 STATIC void aewalk(elem **pn , vec_t ae);

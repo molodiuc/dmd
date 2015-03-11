@@ -33,7 +33,6 @@
 #include        "parser.h"
 #endif
 
-static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
 extern targ_size_t retsize;

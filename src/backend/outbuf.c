@@ -22,7 +22,6 @@
 #include "mem.h"
 
 #if DEBUG
-static char __file__[] = __FILE__;      // for tassert.h
 #include        "tassert.h"
 #endif
 

@@ -18,17 +18,11 @@
  */
 
 #undef assert
-#define assert(e)       ((e) || (local_assert(__LINE__), 0))
+#define assert(e)       ((e) || (util_assert(__FILE__, __LINE__), 0))
 
 #if __clang__
 
 void util_assert(const char * , int) __attribute__((noreturn));
-
-static void local_assert(int line)
-{
-    util_assert(__file__,line);
-    __builtin_unreachable();
-}
 
 #else
 
@@ -37,14 +31,8 @@ __declspec(noreturn)
 #endif
 void util_assert(const char *, int);
 
-static void local_assert(int line)
-{
-    util_assert(__file__,line);
-}
-
 #if __DMC__
 #pragma noreturn(util_assert)
-#pragma noreturn(local_assert)
 #endif
 
 #endif

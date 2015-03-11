@@ -27,7 +27,6 @@
 #undef MEM_PH_MALLOC
 #define MEM_PH_MALLOC mem_fmalloc
 
-static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
 static type *type_list = NULL;          // free list of types

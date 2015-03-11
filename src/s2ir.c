@@ -40,7 +40,6 @@
 #include        "target.h"
 #include        "visitor.h"
 
-static char __file__[] = __FILE__;      // for tassert.h
 #include        "tassert.h"
 
 Symbol *toStringSymbol(const char *str, size_t len, size_t sz);

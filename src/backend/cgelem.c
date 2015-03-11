@@ -24,7 +24,6 @@
 #include        "code.h"
 #include        "type.h"
 
-static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
 extern void error(const char *filename, unsigned linnum, unsigned charnum, const char *format, ...);

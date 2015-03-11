@@ -24,7 +24,6 @@
 #include        "exh.h"
 #include        "list.h"
 
-static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
 // If we use Pentium Pro scheduler

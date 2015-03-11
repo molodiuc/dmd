@@ -26,7 +26,6 @@
 #include        "dt.h"
 #include        "exh.h"
 
-static char __file__[] = __FILE__;      /* for tassert.h                */
 #include        "tassert.h"
 
 /* If we do our own EH tables and stack walking scheme
