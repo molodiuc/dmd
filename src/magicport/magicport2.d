@@ -276,7 +276,7 @@ D[string] buildLongMap(Module m)
     foreach(d; m.decls)
     {
         auto s = d.getLongName();
-        assert(s !in map, s);
+        assert(s !in map, s ~ " has multiple definitions");
         map[s] = D(d, 0);
     }
     return map;
