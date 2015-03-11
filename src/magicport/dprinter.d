@@ -823,6 +823,18 @@ class DPrinter : Visitor
             println(";");
     }
 
+    override void visit(AlignDeclaration ast)
+    {
+        if (!ast.e)
+            return;
+        indent--;
+        print("align(");
+        visitX(ast.e);
+        print(")");
+        indent++;
+        assert(E);
+    }
+
     override void visit(ProtDeclaration ast)
     {
         indent--;
@@ -1435,7 +1447,8 @@ class DPrinter : Visitor
             if (auto de = cast(DeclarationExpr)ast.e)
             {
                 if (cast(StructDeclaration)de.d ||
-                    cast(MacroDeclaration)de.d)
+                    cast(MacroDeclaration)de.d ||
+                    cast(AlignDeclaration)de.d)
                     skipsemi = true;
             }
             visitX(ast.e);
