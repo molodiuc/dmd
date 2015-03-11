@@ -229,7 +229,7 @@ void main(string[] args)
     {
         if (d.count == 0)
         {
-            assert(d.d, id);
+            assert(d.d, id ~ " is unreferenced and overloaded");
             writeln("unreferenced: ", d.d.getName);
             failed = true;
         }
