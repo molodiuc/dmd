@@ -3574,6 +3574,12 @@
             "module" : "libomf",
             "package" : "",
             "imports" : [
+                "root.array",
+                "lib",
+                "root.file",
+                "root.stringtable",
+                "root.outbuffer",
+                "globals"
             ],
             "members" :
             [
@@ -3594,6 +3600,8 @@
             "module" : "scanomf",
             "package" : "",
             "imports" : [
+                "root.outbuffer",
+                "globals"
             ],
             "members" :
             [
@@ -3653,6 +3661,13 @@
             "module" : "libelf",
             "package" : "",
             "imports" : [
+                "root.array",
+                "lib",
+                "root.file",
+                "root.stringtable",
+                "root.outbuffer",
+                "globals",
+                "core.stdc.time"
             ],
             "members" :
             [
@@ -3670,6 +3685,7 @@
             "module" : "scanelf",
             "package" : "",
             "imports" : [
+                "globals"
             ],
             "members" :
             [
@@ -3681,6 +3697,12 @@
             "module" : "libmach",
             "package" : "",
             "imports" : [
+                "root.array",
+                "lib",
+                "root.file",
+                "root.stringtable",
+                "root.outbuffer",
+                "globals"
             ],
             "members" :
             [
@@ -3698,6 +3720,7 @@
             "module" : "scanmach",
             "package" : "",
             "imports" : [
+                "globals"
             ],
             "members" :
             [
