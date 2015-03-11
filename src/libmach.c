@@ -271,6 +271,8 @@ void LibMach::addSymbol(ObjModule *om, char *name, int pickAny)
 #endif
 }
 
+extern void scanMachObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
+
 /************************************
  * Scan single object module for dictionary symbols.
  * Send those symbols to LibMach::addSymbol().
@@ -302,7 +304,6 @@ void LibMach::scanObjModule(ObjModule *om)
 
     Context ctx(this, om);
 
-    extern void scanMachObjModule(void*, void (*pAddSymbol)(void*, char*, int), void *, size_t, const char *, Loc loc);
     scanMachObjModule(&ctx, &Context::addSymbol, om->base, om->length, om->name, loc);
 }
 
