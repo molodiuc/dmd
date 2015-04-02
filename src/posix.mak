@@ -277,8 +277,10 @@ glue.a: $(GLUE_OBJS)
 backend.a: $(BACK_OBJS)
 	ar rcs backend.a $(BACK_OBJS)
 
-dmd: frontend.a root.a glue.a backend.a
-	$(HOST_CC) -o dmd $(MODEL_FLAG) frontend.a root.a glue.a backend.a $(LDFLAGS)
+#dmd: frontend.a root.a glue.a backend.a
+#$(HOST_CC) -o dmd $(MODEL_FLAG) frontend.a root.a glue.a backend.a $(LDFLAGS)
+dmd: ddmd
+	cp ddmd dmd
 
 clean:
 	rm -f $(DMD_OBJS) $(ROOT_OBJS) $(GLUE_OBJS) $(BACK_OBJS) dmd optab.o id.o impcnvgen idgen id.c id.h \
