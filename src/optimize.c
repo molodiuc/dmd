@@ -21,6 +21,8 @@
 #include "init.h"
 #include "enum.h"
 #include "ctfe.h"
+#include "statement.h"
+#include "visitor.h"
 
 /*************************************
  * If variable has a const initializer,
@@ -558,6 +560,138 @@ Expression *Expression_optimize(Expression *e, int result, bool keepLvalue)
             }
 
             e->e1 = e->e1->optimize(result);
+
+            checkInContract(e);
+        }
+
+        void checkInContract(CallExp *e)
+        {
+            if (!e->arguments || !e->f)
+                return;
+
+            if (!e->f->frequire)
+                return;
+
+            TypeFunction *tf = (TypeFunction *)e->f->type;
+            if (tf->varargs)
+                return;
+
+            // All arguments must be value types or immutable
+            // All parameters must be compile-time constants
+            for (size_t i = 0; i < e->arguments->dim; i++)
+            {
+                Parameter *p = Parameter::getNth(tf->parameters, i);
+                if (!p || !p->type->implicitConvTo(p->type->immutableOf()))
+                    return;
+                Expression *arg = (*e->arguments)[i];
+                if (!arg->isConst())
+                    return;
+            }
+
+            // printf("%s\n", e->f->toChars());
+            // printf("%s\n", e->f->frequire->toChars());
+
+            ScopeStatement *ss = e->f->frequire->isScopeStatement();
+            if (!ss)
+                return;
+
+            ExpStatement *es = ss->statement->isExpStatement();
+            if (!es)
+                return;
+
+            if (es->exp->op != TOKassert)
+                return;
+
+            Expression *ae = ((AssertExp *)es->exp)->e1;
+
+            class ArgSubstituter : public Visitor
+            {
+            public:
+                CallExp *ce;
+                Expression *result;
+
+                ArgSubstituter(CallExp *ce)
+                    : ce(ce)
+                {
+                    result = NULL;
+                }
+
+                void visit(Expression *e)
+                {
+                    result = NULL;
+                }
+                void visit(IntegerExp *e)
+                {
+                    result = e;
+                }
+                void visit(VarExp *e)
+                {
+                    if (ce->f->parameters)
+                    {
+                        for(size_t i = 0; i < ce->f->parameters->dim; i++)
+                        {
+                            VarDeclaration *vd = (VarDeclaration *)(*ce->f->parameters)[i];
+                            if (e->var == vd)
+                            {
+                                result = (*ce->arguments)[i]->copy();
+                                return;
+                            }
+                        }
+                    }
+                    visit((Expression *)e);
+                }
+
+                void visit(CmpExp *e)
+                {
+                    Expression *e1 = trySubstitute(e->e1);
+                    if (!e1)
+                        return;
+
+                    Expression *e2 = trySubstitute(e->e2);
+                    if (!e2)
+                        return;
+
+                    CmpExp *ce = (CmpExp *)e->copy();
+                    ce->e1 = e1;
+                    ce->e2 = e2;
+                    result = ce->optimize(0);
+                }
+
+                void visit(EqualExp *e)
+                {
+                    Expression *e1 = trySubstitute(e->e1);
+                    if (!e1)
+                        return;
+
+                    Expression *e2 = trySubstitute(e->e2);
+                    if (!e2)
+                        return;
+
+                    EqualExp *ce = (EqualExp *)e->copy();
+                    ce->e1 = e1;
+                    ce->e2 = e2;
+                    result = ce->optimize(0);
+                }
+
+                Expression *trySubstitute(Expression *e)
+                {
+                    Expression *save = result;
+                    result = NULL;
+                    e->accept(this);
+                    Expression *r = result;
+                    result = save;
+                    return r;
+                }
+            };
+
+            ArgSubstituter v(e);
+            ae->accept(&v);
+            Expression *result = v.result;
+            if (result && result->isBool(false))
+            {
+                e->error("function '%s' called with '%s' does not pass precondition assert(%s)", e->f->toPrettyChars(), e->toChars(), ae->toChars());
+                ret = new ErrorExp();
+            }
         }
 
         void visit(CastExp *e)
