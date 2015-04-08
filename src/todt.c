@@ -53,6 +53,8 @@ void toObjFile(Dsymbol *ds, bool multiobj);
 Symbol *toVtblSymbol(ClassDeclaration *cd);
 Symbol* toSymbol(StructLiteralExp *sle);
 Symbol* toSymbol(ClassReferenceExp *cre);
+Symbol* toSymbol(AssocArrayLiteralExp *aale);
+void genTypeInfo(Type *torig, Scope *sc);
 
 /* ================================================================ */
 
@@ -589,6 +591,26 @@ dt_t **Expression_toDt(Expression *e, dt_t **pdt)
             }
             pdt = ClassReferenceExp_toDt(e, pdt, 0);
         }
+
+        void visit(AssocArrayLiteralExp *e)
+        {
+            if (e->keys->dim == 0)
+            {
+                pdt = dtnzeros(pdt, e->type->size());
+                return;
+            }
+
+            assert(e->type->ty == Taarray);
+            TypeAArray *taa = (TypeAArray *)e->type;
+            if (taa->index->ty == Tint32 &&
+                taa->next->ty == Tint32)
+            {
+                dtxoff(pdt, toSymbol(e), 0);
+                return;
+            }
+
+            visit((Expression *)e);
+        }
     };
 
     ExpToDt v(pdt);
@@ -708,6 +730,116 @@ void StructDeclaration_toDt(StructDeclaration *sd, dt_t **pdt)
     //printf("sd->toDt sle = %s\n", sle->toChars());
     sle->type = sd->type;
     Expression_toDt(sle, pdt);
+}
+
+static size_t prime_list[] = {
+            31UL,
+            97UL,        389UL,
+          1543UL,       6151UL,
+         24593UL,      98317UL,
+        393241UL,    1572869UL,
+       6291469UL,   25165843UL,
+     100663319UL,  402653189UL,
+    1610612741UL, 4294967291UL
+};
+
+static size_t aligntsize(size_t tsize)
+{
+    return (tsize + Target::ptrsize - 1) & ~(Target::ptrsize - 1);
+}
+
+dt_t **aligntsizeExp(dt_t **pdt, Expression *e)
+{
+    pdt = Expression_toDt(e, pdt);
+    size_t diff = (size_t)e->type->size() & (Target::ptrsize - 1);
+    if (diff)
+        pdt = dtnzeros(pdt, Target::ptrsize - diff);
+    return pdt;
+}
+
+void AssocArrayLiteralExp_toDt(AssocArrayLiteralExp *aale, dt_t **pdt)
+{
+    //printf("AssocArrayLiteralExp::toDt(), this='%s'\n", aale->toChars());
+
+    assert(aale->type->ty == Taarray);
+    TypeAArray *taa = (TypeAArray *)aale->type;
+
+    size_t *prime = &prime_list[0];
+    while (*prime < aale->keys->dim)
+        prime++;
+
+    Dts buckets;
+    buckets.setDim(*prime);
+    buckets.zero();
+    dinteger_t firstUsedBucket = *prime;
+
+    for (size_t i = 0; i < aale->keys->dim; i++)
+    {
+        Expression *ekey = (*aale->keys)[i];
+        Expression *evalue = (*aale->values)[i];
+
+        size_t key_hash = ekey->toUInteger();
+
+        /*
+        struct Entry
+        {
+            Entry *next;
+            size_t hash;
+            // key
+            // value
+        }
+        */
+
+        dt_t *dtentry = NULL;
+        dt_t **pentry = &dtentry;
+
+        size_t bucket = (size_t)key_hash % buckets.dim;
+        dt_t *nextdt = buckets[bucket];
+
+        if (nextdt)
+            pentry = dtdtoff(pentry, nextdt, 0);
+        else
+            pentry = dtnzeros(pentry, Target::ptrsize);
+        pentry = dtsize_t(pentry, key_hash);
+        pentry = aligntsizeExp(pentry, ekey);
+        pentry = aligntsizeExp(pentry, evalue);
+
+        buckets[bucket] = dtentry;
+
+        if (bucket < firstUsedBucket)
+            firstUsedBucket = bucket;
+    }
+
+    // buckets array
+    dt_t *dtbuckets = NULL;
+    dt_t **pbuckets = &dtbuckets;
+    for (size_t i = 0; i < buckets.dim; i++)
+    {
+        dt_t *dt = buckets[i];
+        if (dt)
+            pbuckets = dtdtoff(pbuckets, dt, 0);
+        else
+            pbuckets = dtnzeros(pbuckets, Target::ptrsize);
+    }
+
+    /*
+    struct Impl
+    {
+        Entry*[] buckets;
+        size_t nodes;       // total number of entries
+        size_t firstUsedBucket; // starting index for first used bucket.
+        TypeInfo _keyti;
+        Entry*[4] binit;    // initial value of buckets[]
+    }
+    */
+
+    pdt = dtsize_t(pdt, buckets.dim);
+    pdt = dtdtoff(pdt, dtbuckets, 0); // buckets start after the data
+    pdt = dtsize_t(pdt, aale->keys->dim);
+    pdt = dtsize_t(pdt, firstUsedBucket);
+    genTypeInfo(taa->index, NULL);
+    pdt = dtxoff(pdt, toSymbol(taa->index->vtinfo), 0);
+    pdt = dtnzeros(pdt, Target::ptrsize * 4);
 }
 
 /* ================================================================= */

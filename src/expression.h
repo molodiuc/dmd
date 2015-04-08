@@ -423,6 +423,7 @@ public:
     Expressions *keys;
     Expressions *values;
     int ownedByCtfe;    // 1: created in CTFE, 2: constant cached for CTFE
+    Symbol *sym;
 
     AssocArrayLiteralExp(Loc loc, Expressions *keys, Expressions *values);
     bool equals(RootObject *o);

@@ -4214,6 +4214,7 @@ AssocArrayLiteralExp::AssocArrayLiteralExp(Loc loc,
     this->keys = keys;
     this->values = values;
     this->ownedByCtfe = 0;
+    this->sym = NULL;
 }
 
 bool AssocArrayLiteralExp::equals(RootObject *o)

@@ -50,6 +50,7 @@ Classsym *fake_classsym(Identifier *id);
 Symbols *Symbols_create();
 type *Type_toCtype(Type *t);
 dt_t **ClassReferenceExp_toInstanceDt(ClassReferenceExp *ce, dt_t **pdt);
+void AssocArrayLiteralExp_toDt(AssocArrayLiteralExp *aale, dt_t **pdt);
 dt_t **Expression_toDt(Expression *e, dt_t **pdt);
 Symbol *toInitializer(AggregateDeclaration *ad);
 
@@ -711,6 +712,25 @@ Symbol* toSymbol(StructLiteralExp *sle)
     slist_add(s);
     outdata(s);
     return sle->sym;
+}
+
+Symbol* toSymbol(AssocArrayLiteralExp *aale)
+{
+    if (aale->sym) return aale->sym;
+    TYPE *t = type_alloc(TYint);
+    t->Tcount++;
+    Symbol *s = symbol_calloc("internal");
+    s->Sclass = SCstatic;
+    s->Sfl = FLextern;
+    s->Sflags |= SFLnodebug;
+    s->Stype = t;
+    aale->sym = s;
+    dt_t *d = NULL;
+    AssocArrayLiteralExp_toDt(aale, &d);
+    s->Sdt = d;
+    slist_add(s);
+    outdata(s);
+    return aale->sym;
 }
 
 Symbol* toSymbol(ClassReferenceExp *cre)
