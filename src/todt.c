@@ -594,22 +594,25 @@ dt_t **Expression_toDt(Expression *e, dt_t **pdt)
 
         void visit(AssocArrayLiteralExp *e)
         {
-            if (e->keys->dim == 0)
-            {
-                pdt = dtnzeros(pdt, e->type->size());
-                return;
-            }
-
             assert(e->type->ty == Taarray);
             TypeAArray *taa = (TypeAArray *)e->type;
-            if (taa->index->ty == Tint32 &&
-                taa->next->ty == Tint32)
+            switch(taa->index->ty)
             {
+            case Tchar:
+            case Twchar:
+            case Tdchar:
+            case Tint8:
+            case Tuns8:
+            case Tint16:
+            case Tuns16:
+            case Tint32:
+            case Tuns32:
                 dtxoff(pdt, toSymbol(e), 0);
                 return;
+            default:
+                visit((Expression *)e);
+                return;;
             }
-
-            visit((Expression *)e);
         }
     };
 
@@ -743,18 +746,25 @@ static size_t prime_list[] = {
     1610612741UL, 4294967291UL
 };
 
-static size_t aligntsize(size_t tsize)
+dinteger_t calcHash(Expression *e)
 {
-    return (tsize + Target::ptrsize - 1) & ~(Target::ptrsize - 1);
-}
-
-dt_t **aligntsizeExp(dt_t **pdt, Expression *e)
-{
-    pdt = Expression_toDt(e, pdt);
-    size_t diff = (size_t)e->type->size() & (Target::ptrsize - 1);
-    if (diff)
-        pdt = dtnzeros(pdt, Target::ptrsize - diff);
-    return pdt;
+    switch(e->type->ty)
+    {
+    case Tchar:
+    case Twchar:
+    case Tdchar:
+    case Tuns8:
+    case Tuns16:
+    case Tuns32:
+        return e->toUInteger();
+    case Tint8:
+    case Tint16:
+    case Tint32:
+        return e->toInteger();
+    default:
+        assert(0);
+        return 0;
+    }
 }
 
 void AssocArrayLiteralExp_toDt(AssocArrayLiteralExp *aale, dt_t **pdt)
@@ -778,7 +788,7 @@ void AssocArrayLiteralExp_toDt(AssocArrayLiteralExp *aale, dt_t **pdt)
         Expression *ekey = (*aale->keys)[i];
         Expression *evalue = (*aale->values)[i];
 
-        size_t key_hash = ekey->toUInteger();
+        dinteger_t key_hash = calcHash(ekey);
 
         /*
         struct Entry
@@ -793,7 +803,7 @@ void AssocArrayLiteralExp_toDt(AssocArrayLiteralExp *aale, dt_t **pdt)
         dt_t *dtentry = NULL;
         dt_t **pentry = &dtentry;
 
-        size_t bucket = (size_t)key_hash % buckets.dim;
+        size_t bucket = (size_t)(key_hash % buckets.dim);
         dt_t *nextdt = buckets[bucket];
 
         if (nextdt)
@@ -801,8 +811,12 @@ void AssocArrayLiteralExp_toDt(AssocArrayLiteralExp *aale, dt_t **pdt)
         else
             pentry = dtnzeros(pentry, Target::ptrsize);
         pentry = dtsize_t(pentry, key_hash);
-        pentry = aligntsizeExp(pentry, ekey);
-        pentry = aligntsizeExp(pentry, evalue);
+        pentry = Expression_toDt(ekey, pentry);
+        size_t alignsize = global.params.isLP64 ? 16 : Target::ptrsize;
+        size_t diff = (size_t)taa->index->size() & (alignsize - 1);
+        if (diff)
+            pentry = dtnzeros(pentry, alignsize - diff);
+        pentry = Expression_toDt(evalue, pentry);
 
         buckets[bucket] = dtentry;
 

@@ -15,10 +15,28 @@ auto makeAA()
     ];
 }
 
+
+struct testAA(T, U)
+{
+    static void testAA(T key, U value)()
+    {
+        static a = [key : value];
+        auto b = [key : value];
+        assert(a == b);
+    }
+}
+
+alias TT(T...) = T;
+
 void main()
 {
     static a = makeAA();
     auto b = makeAA();
 
     assert(a == b);
+
+    foreach(V; TT!(char, wchar, dchar, byte, ubyte, short, ushort, int, uint))
+    {
+        testAA!(int, V).testAA!(1, 1)();
+    }
 }
